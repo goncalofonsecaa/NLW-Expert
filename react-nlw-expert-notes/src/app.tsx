@@ -1,13 +1,54 @@
+import { Hand } from 'lucide-react';
 import  logo  from '../src/assets/logo-nlw-expert.svg'
 import { NewNoteCard } from './components/new-note-card'
 import { NoteCard } from './components/note-card'
+import { useState } from 'react'
 
-const note = {
-  date: new Date(),
-  content: 'Aqui vai o conteúdo da sua nota'
+interface Note {
+  id: string;
+  date: Date;
+  content: string;
 }
 
+
+
 export function App() {
+  const [search, setSearch] = useState('')
+  const [notes, setNotes] = useState<Note[]>(() => {
+    const notesOnStorage = localStorage.getItem('notes')
+
+    if (notesOnStorage) {
+      return JSON.parse(notesOnStorage)
+    }
+
+    return [];
+  });
+
+  function onNoteCreated(content: string) {
+    const newNote = {
+      id:crypto.randomUUID(),
+      date: new Date(),
+      content
+    }
+
+    const notesArray = [newNote, ...notes]
+
+    setNotes(notesArray)
+
+    localStorage.setItem('notes', JSON.stringify(notesArray))
+  }
+
+  function HandleSearch(event: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(event.target.value)
+  }
+
+  console.log(search)
+
+  const filteredNotes = search !== '' 
+  ? notes.filter(note => note.content.toLocaleLowerCase().includes(search)) 
+  : notes
+
+
   return (
     <div className='mx-auto max-w-6xl my-12 space-y-6'> 
       
@@ -18,6 +59,7 @@ export function App() {
           type="text" 
           placeholder='Procure as suas notas' 
           className='w-full bg-transparent text-3xl font-semibold tracking-tight  outline-none *:placeholder: text-slate-500'
+          onChange = {HandleSearch}
         />
       </form>
 
@@ -25,9 +67,13 @@ export function App() {
 
       <div className='grid grid-cols-3 gap-6 auto-rows-[250px]'>
 
-        <NewNoteCard />
+        <NewNoteCard 
+          onNoteCreated={onNoteCreated}
+        />
 
-        <NoteCard  note= { note } />
+        {filteredNotes.map(note => (
+          <NoteCard key={note.id} note={note} />
+        ))}
 
       </div>
  
